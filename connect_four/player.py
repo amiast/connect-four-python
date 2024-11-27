@@ -57,7 +57,7 @@ class Player:
         self._num_moves = value
 
     def __repr__(self) -> str:
-        return f'Player {self.token}'
+        return f"Player {self.token}"
 
     def _increment_num_moves(self) -> None:
         """ Increments the player's number of moves by `1`. """

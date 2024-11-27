@@ -42,8 +42,8 @@ class ManualPlayer(Player):
                 The index of the column chosen by the player.
         """
         self._increment_num_moves()
-        col = input('Enter a column: ')
+        col = input("Enter a column: ")
         while True:
             if col.isdigit() and board.can_add_to(int(col)):
                 return int(col)
-            col = input('Cannot play token in that column. Try again: ')
+            col = input("Cannot play token in that column. Try again: ")
