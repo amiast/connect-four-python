@@ -7,10 +7,6 @@ import re
 
 from connect_four.board import Board
 
-@pytest.fixture
-def board():
-    return Board(8, 9)
-
 def test_init(board):
     assert board.width == 8
     assert board.height == 9
