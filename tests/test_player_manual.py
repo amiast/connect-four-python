@@ -9,6 +9,7 @@ def test_get_next_move(board, manual_player, monkeypatch):
     # Input correct index
     monkeypatch.setattr("builtins.input", lambda _: "0")
     assert manual_player.get_next_move(board) == 0
+    assert manual_player.num_moves == 1
     board._reset()
 
     # Input not in range
