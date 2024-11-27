@@ -12,21 +12,18 @@ def board():
     return Board(8, 9)
 
 def test_init(board):
-    # Test instantiation
     assert board.width == 8
     assert board.height == 9
     assert board.height == len(board._config)
     assert all( board.width == len(row) for row in board._config )
 
 def test_setter_errors(board):
-    # Test setter exceptions
     with pytest.raises(AttributeError):
         board.width = 8
     with pytest.raises(AttributeError):
         board.height += 1
 
 def test_init_errors():
-    # Test instantiation exceptions
     with pytest.raises(ValueError):
         Board(3, 10)
     with pytest.raises(ValueError):
