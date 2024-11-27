@@ -23,8 +23,10 @@ class Board:
         ----------
         width: :class:`int`
             The number of columns in the Connect Four board.
+            Modifying this attribute after instantiation raises `AttributeError`.
         height: :class:`int`
             The number of rows in the Connect Four board.
+            Modifying this attribute after instantiation raises `AttributeError`.
 
         Raises
         ------
@@ -64,19 +66,19 @@ class Board:
         self._height = value
 
     def __repr__(self) -> str:
-        s = ""
+        result = ""
 
         # Add tokens
         for row in range(self.height):
-            s += "|" + "|".join(self._config[row]) + "|\n"
+            result += "|" + "|".join(self._config[row]) + "|\n"
 
         # Draw a line at the bottom of the board
-        s += "-" * (self.width * 2 + 1) + "\n"
+        result += "-" * (self.width * 2 + 1) + "\n"
 
         # Add indices
-        s += " " + " ".join(str(col % 10) for col in range(self.width))
+        result += " " + " ".join(str(col % 10) for col in range(self.width))
 
-        return s
+        return result
 
     def __eq__(self, other: object) -> bool:
         return (
