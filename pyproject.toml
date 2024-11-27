@@ -1,0 +1,18 @@
+[project]
+name = "connect_four"
+version = "1.0.0"
+description = "Connect Four hosted by your CLI"
+readme = "README.md"
+
+[project.urls]
+Homepage = "https://github.com/amiast/connect-four-python"
+
+[project.scripts]
+play-cf = "connect_four.main:main"
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+
+[tool.coverage.run]
+branch = true
+source = ["connect_four"]
