@@ -81,7 +81,13 @@ class Board:
     def __eq__(self, other: object) -> bool:
         return (
             isinstance(other, Board)
-            and repr(self) == repr(other)
+            and self.width == other.width
+            and self.height == other.height
+            and all(
+                self._config[i][j] == other._config[i][j]
+                for i in range(self.height)
+                for j in range(self.width)
+            )
         )
 
     def __ne__(self, other: object) -> bool:
