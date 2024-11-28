@@ -18,7 +18,7 @@ def test_get_next_move(board, manual_player, monkeypatch):
     assert manual_player.get_next_move(board) == 1
     board._reset()
 
-    # Input not digit
+    # Input contains non-numeric characters
     inputs = iter(["one", "2"])
     monkeypatch.setattr("builtins.input", lambda _: next(inputs))
     assert manual_player.get_next_move(board) == 2
