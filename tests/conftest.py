@@ -24,7 +24,7 @@ def manual_player():
 
 @pytest.fixture
 def auto_player():
-    return AutoPlayer("O")
+    return AutoPlayer("O", 3)
 
 @pytest.fixture
 def random_player():
