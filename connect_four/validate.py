@@ -20,7 +20,7 @@ def validate_token(token: Any):
     if token not in ("O", "X"):
         raise ValueError(
             "Expected `token` to be either 'O' or 'X', "
-            f"instead found {token}"
+            f"instead found '{token}'"
         )
 
 def validate_dimension(value: Any) -> None:
