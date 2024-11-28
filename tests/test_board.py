@@ -12,7 +12,7 @@ def test_init(board):
     assert board.height == 9
     assert board.height == len(board._config)
     assert all( board.width == len(row) for row in board._config )
-    assert all( row == board.height - 1 for row in board._available_rows )
+    assert board._available_rows == [board.height - 1] * board.width
     assert board._available_min == board.height -1
     assert board._filled_max == board.height
 
@@ -32,7 +32,7 @@ def test_reset_private_attr(board):
     board._add_tokens("0011")
     board._reset_private_attr()
     assert all( token == " " for row in board._config for token in row )
-    assert all( row == board.height - 1 for row in board._available_rows )
+    assert board._available_rows == [board.height - 1] * board.width
     assert board._available_min == board.height - 1
     assert board._filled_max == board.height
 
@@ -76,7 +76,7 @@ def test_can_add_to(board):
 
 def test_add_token(board):
     board.add_token("O", 0)
-    assert all( board._available_rows[i] == board.height - 2 if i == 0 else board.height - 1 for i in range(board.width) )
+    assert board._available_rows == [board.height-2] + [board.height-1]*(board.width-1)
     assert board._available_min == board.height - 2
     assert board._filled_max == board.height
 
