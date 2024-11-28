@@ -3,7 +3,7 @@
 Play Connect Four in your CLI with a friend or with a computer! Featuring:
 
 - **Customizable board dimension** - things get wild in a 20 x 20 board
-- **Intellegent Auto-Player implementing naive look-ahead strategy** - it runs in $\operatorname{O}(h^2w^{d+2})$ time, but it's trying its best...!
+- **Intellegent Auto-Player implementing naive look-ahead strategy** - it runs in $O(h^2w^{d+2})$ time, but it's trying its best...!
 
 ## Table of Contents
 
