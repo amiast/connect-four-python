@@ -37,9 +37,7 @@ class Board:
     def __init__(self, width: int, height: int) -> None:
         self.width = width
         self.height = height
-
-        # Token configuration
-        self._config = [[" "] * self.width for _ in range(self.height)]
+        self._reset_private_attr()
 
     @property
     def width(self) -> int:
@@ -64,6 +62,20 @@ class Board:
             raise AttributeError("Cannot modify attribute `height` after instantiation.")
         validate_dimension(value)
         self._height = value
+
+    def _reset_private_attr(self) -> None:
+        """ Resets the board configuration in `_config`,
+            the list of available rows in `_available_rows`,
+            and their `_available_min` and `_filled_max`.
+        """
+        # Token configuration
+        self._config = [[" "] * self.width for _ in range(self.height)]
+        # List of available rows for adding tokens
+        self._available_rows = [self.height - 1] * self.width
+        # Minimum available row (near the top)
+        self._available_min = self.height - 1
+        # Maximum filled (unavailable) row (near the bottom)
+        self._filled_max = self.height
 
     def __repr__(self) -> str:
         result = ""
@@ -110,7 +122,7 @@ class Board:
         """
         return (
             0 <= col < self.width
-            and self._config[0][col] == " "
+            and self._available_rows[col] >= 0
         )
 
     def add_token(self, token: Literal["O", "X"], col: int) -> None:
@@ -133,14 +145,13 @@ class Board:
         if not self.can_add_to(col):
             raise ValueError("Cannot add token to the specified `col`.")
 
-        row = 0
-        while True:
-            if row == self.height - 1:
-                break
-            if self._config[row + 1][col] != " ":
-                break
-            row += 1
-        self._config[row][col] = token
+        self._config[self._available_rows[col]][col] = token
+        self._available_rows[col] -= 1
+
+        # Update min max
+        if self._available_rows[col] < self._available_min:
+            self._available_min = self._available_rows[col]
+        self._filled_max = max(self._available_rows) + 1
 
     def is_full(self) -> bool:
         """ Checks whether the board is full of tokens.
@@ -150,12 +161,10 @@ class Board:
             :class:`bool`
                 Indicates whether the board is full.
         """
-        return all(not self.can_add_to(col) for col in range(self.width))
+        return all( row == -1 for row in self._available_rows )
 
     def remove_token(self, col) -> None:
         """ Removes the top token from the specified `col` in the board.
-
-            Does not modify the board if the specified `col` has no tokens.
 
             Parameters
             ----------
@@ -165,25 +174,33 @@ class Board:
             Raises
             ------
             ValueError
-                `col` is an invalid index.
+                `col` is an invalid index or is empty.
         """
         if col < 0 or col >= self.width:
             raise ValueError("The specified `col` is not a valid index.")
 
-        row = 0
-        while row < self.height:
-            if self._config[row][col] != " ":
-                self._config[row][col] = " "
-                return
-            row += 1
+        if self._available_rows[col] == self.height - 1:
+            raise ValueError("The specified `col` is empty.")
 
-    def connects(self, token: Literal["O", "X"]) -> bool:
+        self._config[self._available_rows[col] + 1][col] = " "
+        self._available_rows[col] += 1
+
+        # Update min max
+        self._available_min = min(self._available_rows)
+        if self._available_rows[col] + 1 > self._filled_max:
+            self._filled_max = self._available_rows[col] + 1
+
+    def connects(self, token: Literal["O", "X"], *, lazy: bool = False) -> bool:
         """ Checks whether the board contains four connected `token`'s.
 
             Parameters
             ----------
             token: Literal[`'O'`, `'X'`]
                 The token for verification.
+            lazy: :class:`bool`
+                If `True`, only search regions near the top of the board,
+                assuming the remaining parts have already been searched by an earlier call.
+                Otherwise, search the entire board.
 
             Raises
             ------
@@ -197,15 +214,22 @@ class Board:
         """
         validate_token(token)
         return (
-            self._connects_horiz(token)
-            or self._connects_vert(token)
-            or self._connects_topleft(token)
-            or self._connects_bottomleft(token)
+            self._connects_horiz(token, lazy=lazy)
+            or self._connects_vert(token, lazy=lazy)
+            or self._connects_topleft(token, lazy=lazy)
+            or self._connects_bottomleft(token, lazy=lazy)
         )
 
-    def _connects_horiz(self, token: Literal["O", "X"]) -> bool:
+    def _connects_horiz(self, token: Literal["O", "X"], *, lazy: bool = False) -> bool:
         """ Returns whether the board has four connected HORIZONTAL `token`'s. """
-        for row in range(self.height):
+        if lazy:
+            start = self._available_min + 1
+            stop = min(self._filled_max + 1, self.height)
+        else:
+            start = 0
+            stop = self.height
+
+        for row in range(start, stop):
             for col in range(self.width - 3):
                 if (
                     token
@@ -218,9 +242,16 @@ class Board:
 
         return False
 
-    def _connects_vert(self, token: Literal["O", "X"]) -> bool:
+    def _connects_vert(self, token: Literal["O", "X"], *, lazy: bool = False) -> bool:
         """ Returns whether the board has four connected VERTICAL `token`'s. """
-        for row in range(self.height - 3):
+        if lazy:
+            start = self._available_min + 1
+            stop = min(self._filled_max + 1, self.height - 3)
+        else:
+            start = 0
+            stop = self.height - 3
+
+        for row in range(start, stop):
             for col in range(self.width):
                 if (
                     token
@@ -233,9 +264,16 @@ class Board:
 
         return False
 
-    def _connects_topleft(self, token: Literal["O", "X"]) -> bool:
+    def _connects_topleft(self, token: Literal["O", "X"], *, lazy: bool = False) -> bool:
         """ Returns whether the board has four connected TOP-LEFT-DIAGONAL `token`'s. """
-        for row in range(self.height - 3):
+        if lazy:
+            start = self._available_min + 1
+            stop = min(self._filled_max + 1, self.height - 3)
+        else:
+            start = 0
+            stop = self.height - 3
+
+        for row in range(start, stop):
             for col in range(self.width - 3):
                 if (
                     token
@@ -248,16 +286,23 @@ class Board:
 
         return False
 
-    def _connects_bottomleft(self, token: Literal["O", "X"]) -> bool:
+    def _connects_bottomleft(self, token: Literal["O", "X"], *, lazy: bool = False) -> bool:
         """ Returns whether the board has four connected BOTTOM-LEFT-DIAGONAL `token`'s. """
-        for row in range(3, self.height):
+        if lazy:
+            start = self._available_min + 1
+            stop = min(self._filled_max + 1, self.height - 3)
+        else:
+            start = 0
+            stop = self.height - 3
+
+        for row in range(start, stop):
             for col in range(self.width - 3):
                 if (
                     token
-                    == self._config[row][col]
-                    == self._config[row - 1][col + 1]
-                    == self._config[row - 2][col + 2]
-                    == self._config[row - 3][col + 3]
+                    == self._config[row][col + 3]
+                    == self._config[row + 1][col + 2]
+                    == self._config[row + 2][col + 1]
+                    == self._config[row + 3][col]
                 ):
                     return True
 
@@ -266,13 +311,6 @@ class Board:
     #
     # Debugging functions
     #
-
-    def _reset(self) -> None:
-        """ This function is for debugging purposes only.
-
-            Resets the board configuration in `_config`.
-        """
-        self._config = [[" "] * self.width for _ in range(self.height)]
 
     def _add_tokens(self, indices: str) -> None:
         """ This function is for debugging purposes only.

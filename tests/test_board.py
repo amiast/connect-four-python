@@ -12,6 +12,9 @@ def test_init(board):
     assert board.height == 9
     assert board.height == len(board._config)
     assert all( board.width == len(row) for row in board._config )
+    assert all( row == board.height - 1 for row in board._available_rows )
+    assert board._available_min == board.height -1
+    assert board._filled_max == board.height
 
 def test_setter_errors(board):
     with pytest.raises(AttributeError):
@@ -24,6 +27,14 @@ def test_init_errors():
         Board(3, 10)
     with pytest.raises(ValueError):
         Board(12, 1)
+
+def test_reset_private_attr(board):
+    board._add_tokens("0011")
+    board._reset_private_attr()
+    assert all( token == " " for row in board._config for token in row )
+    assert all( row == board.height - 1 for row in board._available_rows )
+    assert board._available_min == board.height - 1
+    assert board._filled_max == board.height
 
 def test_repr(board):
     pattern = r"^[01234567|\- \n]+$"
@@ -65,8 +76,16 @@ def test_can_add_to(board):
 
 def test_add_token(board):
     board.add_token("O", 0)
+    assert all( board._available_rows[i] == board.height - 2 if i == 0 else board.height - 1 for i in range(board.width) )
+    assert board._available_min == board.height - 2
+    assert board._filled_max == board.height
+
     board.add_token("X", 0)
     board.add_token("O", 2)
+    assert board._available_rows[0] == board.height - 3
+    assert board._available_rows[2] == board.height - 2
+    assert board._available_min == board.height - 3
+    assert board._filled_max == board.height
     assert board._config[-1][0] == "O"
     assert board._config[-2][0] == "X"
     assert board._config[-1][2] == "O"
@@ -76,7 +95,7 @@ def test_add_token_errors(board):
         board.add_token("M", 0)
     with pytest.raises(ValueError):
         board.add_token("O", -1)
-    
+
     for _ in range(board.height):
         board.add_token("O", 0)
     with pytest.raises(ValueError):
@@ -89,12 +108,14 @@ def test_is_full(board):
             board.add_token("O", col)
     assert board.is_full()
 
-def test_remove_tokens(board):
+def test_remove_token(board):
     for _ in range(4):
         board.add_token("O", 0)
-    for _ in range(5):
+    for _ in range(4):
         board.remove_token(0)
     assert all( row[0] == " " for row in board._config )
+    assert board._available_rows[0] == board.height - 1
+    board._reset_private_attr()
 
     for _ in range(4):
         board.add_token("O", 0)
@@ -102,12 +123,21 @@ def test_remove_tokens(board):
         board.remove_token(0)
     assert all( row[0] == " " for row in board._config[:-1] )
     assert board._config[-1][0] == "O"
+    board._reset_private_attr()
 
-def test_remove_tokens_errors(board):
+    board._add_tokens("01234567")
+    board.remove_token(7)
+    assert board._available_min == 7
+    assert board._filled_max == 9
+    board._reset_private_attr()
+
+def test_remove_token_errors(board):
     with pytest.raises(ValueError):
         board.remove_token(-1)
     with pytest.raises(ValueError):
         board.remove_token(board.width)
+    with pytest.raises(ValueError):
+        board.remove_token(0)
 
 def test_connects(board):
     assert not board.connects("O")
@@ -118,61 +148,56 @@ def test_connects_horiz(board):
     assert not board.connects("O")
     assert board._connects_horiz("X")
     assert board.connects("X")
-    board._reset()
+    board._reset_private_attr()
 
     board._add_tokens("33445566")
     assert board._connects_horiz("O")
     assert board.connects("O")
     assert board._connects_horiz("X")
     assert board.connects("X")
-    board._reset()
+    board._reset_private_attr()
 
 def test_connects_vert(board):
     board._add_tokens("334241424")
     assert board._connects_vert("O")
     assert board.connects("O")
     assert not board.connects("X")
-    board._reset()
+    board._reset_private_attr()
 
     board._add_tokens("56565656")
     assert board._connects_vert("O")
     assert board.connects("O")
     assert board._connects_vert("X")
     assert board.connects("X")
-    board._reset()
+    board._reset_private_attr()
 
 def test_connects_topleft(board):
     board._add_tokens("76654454564")
     assert board._connects_topleft("O")
     assert board.connects("O")
     assert not board.connects("X")
-    board._reset()
+    board._reset_private_attr()
 
     board._add_tokens("54432332121121")
     assert board._connects_topleft("O")
     assert board.connects("O")
     assert board._connects_topleft("X")
     assert board.connects("X")
-    board._reset()
+    board._reset_private_attr()
 
 def test_connects_bottomleft(board):
     board._add_tokens("2324555444563")
     assert board._connects_bottomleft("O")
     assert board.connects("O")
     assert not board.connects("X")
-    board._reset()
+    board._reset_private_attr()
 
     board._add_tokens("12234334545545")
     assert board._connects_bottomleft("O")
     assert board.connects("O")
     assert board._connects_bottomleft("X")
     assert board.connects("X")
-    board._reset()
-
-def test_reset(board):
-    board._add_tokens("0011")
-    board._reset()
-    assert all( token == " " for row in board._config for token in row )
+    board._reset_private_attr()
 
 def test_add_tokens(board):
     board._add_tokens("0123")
